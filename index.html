@@ -1,63 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digit Cipher | encrydigits</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2em; }
-        h1 { color: #1e90ff; }
-        label, input, button { margin: 0.5em 0; display: block; }
-        #result { font-weight: bold; margin-top: 1em; }
-        .container { max-width: 400px; margin: auto; padding: 2em; border: 1px solid #ccc; border-radius: 8px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>encrydigits | Digit & Text Encryption</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    h1 { color: #1e90ff; }
+    .container { max-width: 420px; margin: auto; padding: 2em; border: 1px solid #ccc; border-radius: 8px; }
+    label, select, input, button { margin-top: 0.6em; display: block; }
+    #result, #warn { font-weight: bold; margin-top: 1em; }
+    #warn { color: #d9534f; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Digit Cipher</h1>
-        <p>Encrypt or decrypt numbers using a digit shift (modulo 10).</p>
-
-        <label for="number">Number string (digits only):</label>
-        <input type="text" id="number" placeholder="e.g. 1234567890">
-
-        <label for="shift">Shift (0-9):</label>
-        <input type="number" id="shift" min="0" max="9" value="3">
-
-        <button onclick="runCipher('encrypt')">Encrypt</button>
-        <button onclick="runCipher('decrypt')">Decrypt</button>
-
-        <div id="result"></div>
-
-        <h3>Usage Instructions:</h3>
-        <ul>
-            <li>Enter a string of digits, e.g. <code>1234567890</code>.</li>
-            <li>Select a shift value (how far to rotate each digit).</li>
-            <li>Choose Encrypt or Decrypt.</li>
-            <li>Result will appear below.</li>
-        </ul>
+  <div class="container">
+    <h1>encrydigits</h1>
+    <label for="mode">Cipher Mode:</label>
+    <select id="mode" onchange="toggleMode()">
+      <option value="digits">Digits Only</option>
+      <option value="text">Text Encryption</option>
+    </select>
+    
+    <div id="digits-options">
+      <label for="digits-in">Number string (digits only):</label>
+      <input type="text" id="digits-in" placeholder="e.g. 1234567890">
+      <label for="shift">Shift (0-9):</label>
+      <input type="number" id="shift" min="0" max="9" value="3">
+      <button onclick="obf('encryptDigit')">Encrypt</button>
+      <button onclick="obf('decryptDigit')">Decrypt</button>
     </div>
+    
+    <div id="text-options" style="display:none;">
+      <label for="text-in">Text:</label>
+      <input type="text" id="text-in" placeholder="e.g. Hello">
+      <label for="direction">Encryption Direction:</label>
+      <select id="direction">
+        <option value="t2n">Text → Numbers</option>
+        <option value="n2t">Numbers → Text</option>
+      </select>
+      <button onclick="obf('processText')">Go</button>
+    </div>
+    
+    <div id="warn"></div>
+    <div id="result"></div>
 
-    <script>
-        function runCipher(action) {
-            const text = document.getElementById('number').value;
-            const shift = parseInt(document.getElementById('shift').value);
-            if (!/^\d+$/.test(text)) {
-                document.getElementById('result').innerText = "Please enter digits only.";
-                return;
-            }
-            let result = '';
-            for (const char of text) {
-                const digit = parseInt(char);
-                let shifted;
-                if (action === 'encrypt') {
-                    shifted = (digit + shift) % 10;
-                } else {
-                    shifted = (digit - shift + 10) % 10;
-                }
-                result += shifted;
-            }
-            document.getElementById('result').innerText = (action === 'encrypt' ? "Encrypted: " : "Decrypted: ") + result;
+    <h3>Instructions:</h3>
+    <ul>
+      <li>Choose cipher mode at the top.</li>
+      <li>Digits Only: Encrypt or decrypt digit strings using a shift.</li>
+      <li>Text Encryption: Encode text as numbers or decode numbers as text (A=1, B=2...Z=26, space=0).</li>
+      <li>Special characters will trigger a warning and are not processed.</li>
+    </ul>
+  </div>
+  <script>
+    function toggleMode() {
+      var m = document.getElementById('mode').value;
+      document.getElementById('digits-options').style.display = m === 'digits' ? '' : 'none';
+      document.getElementById('text-options').style.display = m === 'text' ? '' : 'none';
+      document.getElementById('warn').innerText = '';
+      document.getElementById('result').innerText = '';
+    }
+
+    // Obfuscated logic and functions
+    function obf(k) {
+      var w = document.getElementById('warn'), r = document.getElementById('result');
+      w.innerText=''; r.innerText='';
+      if (k === 'encryptDigit' || k === 'decryptDigit') {
+        var s = document.getElementById('digits-in').value, sh = parseInt(document.getElementById('shift').value);
+        if (!/^\d+$/.test(s)) { w.innerText = 'Warning: Only digits allowed.'; return; }
+        var z = '', op = k === 'encryptDigit' ? 1 : -1;
+        for (var i=0; i<s.length; i++) {
+          var d = parseInt(s[i]);
+          var x = ((d + op*sh) % 10 + 10) % 10;
+          z += x;
         }
-    </script>
+        r.innerText = k === 'encryptDigit' ? "Encrypted: " + z : "Decrypted: " + z;
+      } else if (k === 'processText') {
+        var txt = document.getElementById('text-in').value, dir = document.getElementById('direction').value;
+        if (/[^a-zA-Z0-9 ]/.test(txt)) { w.innerText = 'Warning: Only letters, numbers and spaces allowed.'; return; }
+        if (dir === 't2n') {
+          // Text -> Numbers (A=1, ..., Z=26, space=0)
+          var out = '', t = txt.toUpperCase();
+          for (var j=0; j<t.length; j++) {
+            var c = t[j];
+            if (c === ' ') out += '0 ';
+            else if (/[A-Z]/.test(c)) out += (c.charCodeAt(0)-64)+' ';
+            else if (/[0-9]/.test(c)) out += c+' ';
+          }
+          r.innerText = "Encoded: " + out.trim();
+        } else {
+          // Numbers -> Text
+          var arr = txt.split(/[\s,]+/), out2 = '';
+          for (var k=0; k<arr.length; k++) {
+            var n = parseInt(arr[k]);
+            if (isNaN(n)) { out2 += '?'; continue; }
+            if (n === 0) out2 += ' ';
+            else if (n >= 1 && n <= 26) out2 += String.fromCharCode(n+64);
+            else if (n >= 0 && n <= 9) out2 += n.toString();
+            else out2 += '?';
+          }
+          r.innerText = "Decoded: " + out2;
+        }
+      }
+    }
+  </script>
 </body>
 </html>
