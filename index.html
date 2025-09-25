@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digit Cipher | encrydigits</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        h1 { color: #1e90ff; }
+        label, input, button { margin: 0.5em 0; display: block; }
+        #result { font-weight: bold; margin-top: 1em; }
+        .container { max-width: 400px; margin: auto; padding: 2em; border: 1px solid #ccc; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Digit Cipher</h1>
+        <p>Encrypt or decrypt numbers using a digit shift (modulo 10).</p>
+
+        <label for="number">Number string (digits only):</label>
+        <input type="text" id="number" placeholder="e.g. 1234567890">
+
+        <label for="shift">Shift (0-9):</label>
+        <input type="number" id="shift" min="0" max="9" value="3">
+
+        <button onclick="runCipher('encrypt')">Encrypt</button>
+        <button onclick="runCipher('decrypt')">Decrypt</button>
+
+        <div id="result"></div>
+
+        <h3>Usage Instructions:</h3>
+        <ul>
+            <li>Enter a string of digits, e.g. <code>1234567890</code>.</li>
+            <li>Select a shift value (how far to rotate each digit).</li>
+            <li>Choose Encrypt or Decrypt.</li>
+            <li>Result will appear below.</li>
+        </ul>
+    </div>
+
+    <script>
+        function runCipher(action) {
+            const text = document.getElementById('number').value;
+            const shift = parseInt(document.getElementById('shift').value);
+            if (!/^\d+$/.test(text)) {
+                document.getElementById('result').innerText = "Please enter digits only.";
+                return;
+            }
+            let result = '';
+            for (const char of text) {
+                const digit = parseInt(char);
+                let shifted;
+                if (action === 'encrypt') {
+                    shifted = (digit + shift) % 10;
+                } else {
+                    shifted = (digit - shift + 10) % 10;
+                }
+                result += shifted;
+            }
+            document.getElementById('result').innerText = (action === 'encrypt' ? "Encrypted: " : "Decrypted: ") + result;
+        }
+    </script>
+</body>
+</html>
